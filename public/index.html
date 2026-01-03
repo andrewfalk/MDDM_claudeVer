@@ -117,6 +117,7 @@
         }
 
         .mobile-menu.show {
+            display: block;
             right: 0;
         }
 
@@ -129,11 +130,11 @@
             height: 100%;
             background: rgba(0,0,0,0.5);
             z-index: 999;
-            opacity: 0;
             transition: opacity 0.3s ease;
         }
 
         .mobile-menu-overlay.show {
+            display: block;
             opacity: 1;
         }
 
@@ -989,7 +990,6 @@
             /* 헤더 액션 숨기고 햄버거 메뉴 표시 */
             .header-actions { display: none; }
             .mobile-menu-btn { display: flex; }
-            .mobile-menu, .mobile-menu-overlay { display: block; }
             .panel-tab { font-size: 12px; padding: 10px 6px; }
             .card-header h2 { font-size: 14px; }
             .form-grid { grid-template-columns: 1fr; }
