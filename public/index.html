@@ -87,6 +87,92 @@
 
         .header-actions { display: flex; gap: 12px; }
 
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 280px;
+            height: 100vh;
+            background: var(--gray-900);
+            box-shadow: -4px 0 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            padding: 20px;
+        }
+
+        .mobile-menu.show {
+            right: 0;
+        }
+
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mobile-menu-overlay.show {
+            opacity: 1;
+        }
+
+        .mobile-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .mobile-menu-title {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .mobile-menu-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .mobile-menu-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .mobile-menu-items .btn {
+            width: 100%;
+            justify-content: flex-start;
+            padding: 14px 16px;
+        }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -437,12 +523,7 @@
             display: grid;
             grid-template-columns: 1fr 280px;
             gap: 20px;
-        }
-        
-        .posture-column { }
-        
-        .correction-column { }
-        
+        }     
         .correction-panel {
             background: var(--gray-50);
             border-radius: var(--radius);
@@ -899,10 +980,16 @@
         }
         
         @media (max-width: 768px) {
-            body { padding-bottom: 120px; }
-            .header { padding: 12px 16px; }
-            .logo h1 { font-size: 16px; }
-            .logo span { font-size: 11px; }
+            body { padding-bottom: 60px; }
+            .header-top { padding: 12px 16px; }
+            .logo-text h1 { font-size: 16px; }
+            .logo-text span { font-size: 11px; }
+            .logo-icon { width: 36px; height: 36px; font-size: 20px; }
+
+            /* 헤더 액션 숨기고 햄버거 메뉴 표시 */
+            .header-actions { display: none; }
+            .mobile-menu-btn { display: flex; }
+            .mobile-menu, .mobile-menu-overlay { display: block; }
             .panel-tab { font-size: 12px; padding: 10px 6px; }
             .card-header h2 { font-size: 14px; }
             .form-grid { grid-template-columns: 1fr; }
@@ -911,17 +998,19 @@
             .content-grid { grid-template-columns: 1fr; }
             .results-grid { grid-template-columns: 1fr; }
             .footer-actions {
-                flex-direction: column;
-                gap: 12px;
-                padding: 12px 16px;
-            }
-            .footer-info {
-                flex-wrap: wrap;
+                flex-direction: row;
+                gap: 8px;
+                padding: 10px 16px;
                 justify-content: center;
+            }
+            /* 모바일에서 통계 정보 완전히 숨김 */
+            .footer-info {
+                display: none !important;
             }
             .footer-buttons {
-                flex-wrap: wrap;
+                display: flex;
                 justify-content: center;
+                width: 100%;
             }
             .btn { padding: 8px 12px; font-size: 12px; }
             .btn-lg { padding: 10px 16px; }
@@ -1541,8 +1630,9 @@
                     </div>
                 </div>
             </div>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
         </div>
-        
+
         <div class="progress-bar">
             <div class="step active" id="step1-tab" onclick="showStep(1)">
                 <div class="step-number">1</div>
@@ -1560,6 +1650,36 @@
             </div>
         </div>
     </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Mobile Menu Sidebar -->
+    <div class="mobile-menu" id="mobile-menu">
+        <div class="mobile-menu-header">
+            <span class="mobile-menu-title">메뉴</span>
+            <button class="mobile-menu-close" onclick="toggleMobileMenu()">✕</button>
+        </div>
+        <div class="mobile-menu-items">
+            <button class="btn btn-ghost" onclick="showLoadModal(); toggleMobileMenu();">
+                📂 불러오기
+            </button>
+            <button class="btn btn-ghost" onclick="saveToLocalStorage(); toggleMobileMenu();">
+                💾 저장하기
+            </button>
+            <hr style="margin: 12px 0; border: none; border-top: 1px solid rgba(255,255,255,0.1);">
+            <button class="btn btn-ghost" onclick="exportToExcel(); toggleMobileMenu();">
+                📊 Excel 내보내기
+            </button>
+            <button class="btn btn-ghost" onclick="exportToPDF(); toggleMobileMenu();">
+                📄 PDF 내보내기
+            </button>
+            <hr style="margin: 12px 0; border: none; border-top: 1px solid rgba(255,255,255,0.1);">
+            <button class="btn btn-ghost" onclick="if(confirm('현재 입력된 모든 데이터를 삭제하시겠습니까?')) { clearCurrentData(); toggleMobileMenu(); }">
+                🗑️ 데이터 초기화
+            </button>
+        </div>
+    </div>
 
     <!-- ========== STEP 1 ========== -->
     <div class="page active" id="step1-page">
@@ -1999,6 +2119,21 @@
 
 
     <script>
+        // ========== 모바일 메뉴 ==========
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const overlay = document.getElementById('mobile-menu-overlay');
+            menu.classList.toggle('show');
+            overlay.classList.toggle('show');
+
+            // 메뉴가 열릴 때 body 스크롤 방지
+            if (menu.classList.contains('show')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+
         // ========== 공식 데이터베이스 ==========
         const formulaDB = {
             G1: { name: '똑바로 → 똑바로', category: 'lifting', b: 800, m: 45, applyCorrectionFactor: true },
