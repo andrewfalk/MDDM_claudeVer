@@ -1,0 +1,23 @@
+{
+  "name": "mddm-spine-evaluation",
+  "version": "1.3.0",
+  "description": "MDDM 척추압박력 평가 시스템 - Mainz-Dortmund Dose Model 기반 직업성 요추 질환 위험도 분석",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required'",
+    "start": "vercel dev"
+  },
+  "keywords": [
+    "MDDM",
+    "ergonomics",
+    "spine",
+    "occupational-health",
+    "biomechanics"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
