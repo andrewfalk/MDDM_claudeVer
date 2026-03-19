@@ -1765,6 +1765,10 @@
                                 <div class="calc-row"><span>총 개월:</span><strong>75개월</strong></div>
                                 <div class="calc-row"><span>총 근무일:</span><strong>1,250일</strong></div>
                             </div>
+                            <div class="mini-form-group" style="margin-top:12px;">
+                                <label>평가 메모</label>
+                                <textarea id="input-memo" rows="3" placeholder="특이사항, 병력, 작업 환경 등 추가 정보를 기록하세요..." style="width:100%;padding:8px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;line-height:1.5;"></textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2102,6 +2106,10 @@
                                 <button class="btn-ai" onclick="runAIAnalysis()" id="ai-analyze-btn">
                                     <span>🤖</span> AI 심층 분석
                                 </button>
+                                <select id="ai-model-select" style="padding:8px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:12px;color:var(--gray-700);background:white;cursor:pointer;" title="AI 모델 선택">
+                                    <option value="claude-haiku-4-5-20251001">Haiku 4.5 (경제적)</option>
+                                    <option value="claude-sonnet-4-6">Sonnet 4.6 (고품질)</option>
+                                </select>
                                 <span class="ai-status" id="ai-status"></span>
                             </div>
                             <div id="ai-result-container"></div>
@@ -2150,6 +2158,16 @@
             }
         }
 
+        // ========== 유틸리티 ==========
+        function escapeHtml(str) {
+            return String(str === null || str === undefined ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         // ========== 공식 데이터베이스 ==========
         const formulaDB = {
             G1: { name: '똑바로 → 똑바로', category: 'lifting', b: 800, m: 45, applyCorrectionFactor: true },
@@ -2180,7 +2198,7 @@
         // ========== 애플리케이션 상태 ==========
         const appState = {
             personalInfo: { name: '홍길동', gender: 'male', age: 45, height: 172, weight: 68 },
-            jobInfo: { jobName: '제조업 생산직', workDaysPerYear: 250, careerYears: 6, careerMonths: 3 },
+            jobInfo: { jobName: '제조업 생산직', workDaysPerYear: 250, careerYears: 6, careerMonths: 3, memo: '' },
             tasks: [],
             currentTaskIndex: -1,
             aiAnalysisResult: null  // AI 분석 결과 저장
@@ -2649,7 +2667,7 @@
                 
                 return '<div class="task-item ' + (isActive ? 'active' : '') + '" onclick="selectTask(' + index + ')">' +
                     '<div class="task-number">' + (index + 1) + '</div>' +
-                    '<div class="task-info"><h4>' + task.name + '</h4><span>' + task.posture + ' · ' + task.weight + 'kg · ' + task.frequency + '회/일</span></div>' +
+                    '<div class="task-info"><h4>' + escapeHtml(task.name) + '</h4><span>' + escapeHtml(task.posture) + ' · ' + task.weight + 'kg · ' + task.frequency + '회/일</span></div>' +
                     '<div class="task-force ' + forceClass + '">' + task.force.toLocaleString() + ' N</div>' +
                 '</div>';
             }).join('');
@@ -2727,6 +2745,8 @@
             
             // 우측 패널 작업 요약 목록 업데이트
             updateTaskSummaryList();
+            // 임시저장
+            saveDraft();
         }
         
         function updateTaskSummaryList() {
@@ -2745,7 +2765,7 @@
             container.innerHTML = tasks.map(function(task, idx) {
                 var forceClass = task.force >= thresholds.criticalForce ? 'high' : (task.force >= threshold ? 'warning' : 'safe');
                 return '<div class="task-summary-item">' +
-                    '<span class="task-summary-name">' + (idx + 1) + '. ' + task.name + '</span>' +
+                    '<span class="task-summary-name">' + (idx + 1) + '. ' + escapeHtml(task.name) + '</span>' +
                     '<span class="task-summary-force ' + forceClass + '">' + task.force.toLocaleString() + ' N</span>' +
                 '</div>';
             }).join('');
@@ -2759,6 +2779,7 @@
             appState.jobInfo.workDaysPerYear = parseInt(document.getElementById('input-work-days')?.value) || 250;
             appState.jobInfo.careerYears = parseInt(document.getElementById('input-career-years')?.value) || 0;
             appState.jobInfo.careerMonths = parseInt(document.getElementById('input-career-months')?.value) || 0;
+            appState.jobInfo.memo = document.getElementById('input-memo')?.value || '';
         }
 
         // ========== 2단계 결과 ==========
@@ -2784,9 +2805,9 @@
             // 대상자 정보
             const subjectInfo = document.querySelector('.subject-info');
             if (subjectInfo) {
-                subjectInfo.innerHTML = 
-                    '<div class="subject-info-item"><div class="subject-info-label">대상자</div><div class="subject-info-value">' + appState.personalInfo.name + ' (' + (gender === 'male' ? '남' : '여') + ', ' + appState.personalInfo.age + '세)</div></div>' +
-                    '<div class="subject-info-item"><div class="subject-info-label">직업</div><div class="subject-info-value">' + appState.jobInfo.jobName + '</div></div>' +
+                subjectInfo.innerHTML =
+                    '<div class="subject-info-item"><div class="subject-info-label">대상자</div><div class="subject-info-value">' + escapeHtml(appState.personalInfo.name) + ' (' + (gender === 'male' ? '남' : '여') + ', ' + appState.personalInfo.age + '세)</div></div>' +
+                    '<div class="subject-info-item"><div class="subject-info-label">직업</div><div class="subject-info-value">' + escapeHtml(appState.jobInfo.jobName) + '</div></div>' +
                     '<div class="subject-info-item"><div class="subject-info-label">직업력</div><div class="subject-info-value">' + totalYears.toFixed(1) + '년</div></div>' +
                     '<div class="subject-info-item"><div class="subject-info-label">연간 근무일수</div><div class="subject-info-value">' + appState.jobInfo.workDaysPerYear + '일</div></div>';
             }
@@ -2795,7 +2816,7 @@
             const summaryHeader = document.querySelector('.summary-header');
             if (summaryHeader) {
                 summaryHeader.innerHTML = 
-                    '<div class="summary-card"><div class="summary-card-label">최대 단일 압박력</div><div class="summary-card-value">' + maxForce.toLocaleString() + '<span class="unit">N</span></div><div class="summary-card-sub">' + (maxForceTask?.name || '') + ': ' + (maxForceTask?.posture || '') + '</div></div>' +
+                    '<div class="summary-card"><div class="summary-card-label">최대 단일 압박력</div><div class="summary-card-value">' + maxForce.toLocaleString() + '<span class="unit">N</span></div><div class="summary-card-sub">' + escapeHtml(maxForceTask?.name || '') + ': ' + escapeHtml(maxForceTask?.posture || '') + '</div></div>' +
                     '<div class="summary-card"><div class="summary-card-label">일일 누적 용량</div><div class="summary-card-value">' + dailyResult.dailyDoseKNh.toFixed(3) + '<span class="unit">kN·h</span></div><div class="summary-card-sub">' + (dailyResult.dailyDoseKNh >= thresholds.dailyDose[gender] ? '✓ 임계치 이상' : '임계치 미만') + '</div></div>' +
                     '<div class="summary-card highlight"><div class="summary-card-label">평생 누적 용량</div><div class="summary-card-value">' + lifetimeResult.lifetimeDoseMNh.toFixed(2) + '<span class="unit">MN·h</span></div><div class="summary-card-sub">' + (comparison.dws2.status !== 'safe' ? '⚠️ DWS2 ' + comparison.dws2.percent.toFixed(0) + '%' : '✓ 기준 충족') + '</div></div>';
             }
@@ -2840,7 +2861,7 @@
                     
                     return '<div class="task-detail-item">' +
                         '<div class="task-detail-num">' + (i + 1) + '</div>' +
-                        '<div class="task-detail-info"><h4>' + task.name + '</h4><span>' + task.posture + ' · ' + task.weight + 'kg · ' + task.frequency + '회/일</span></div>' +
+                        '<div class="task-detail-info"><h4>' + escapeHtml(task.name) + '</h4><span>' + escapeHtml(task.posture) + ' · ' + task.weight + 'kg · ' + task.frequency + '회/일</span></div>' +
                         '<div class="task-detail-force"><div class="task-detail-force-value" style="color: ' + forceColor + '">' + task.force.toLocaleString() + ' N</div><div class="task-detail-force-label">압박력</div></div>' +
                         '<div class="task-detail-time"><div class="task-detail-time-value">' + totalHours.toFixed(3) + 'h</div><div class="task-detail-time-label">일일 시간</div></div>' +
                         '<div class="task-detail-dose"><div class="task-detail-dose-value">' + (included ? partialDose.toFixed(4) : '-') + '</div><div class="task-detail-dose-label">' + (included ? 'kN·h' : '제외') + '</div></div>' +
@@ -3225,11 +3246,28 @@
         
         function getAllSavedData() {
             var data = localStorage.getItem(STORAGE_KEY);
-            return data ? JSON.parse(data) : [];
+            if (!data) return [];
+            try {
+                return JSON.parse(data);
+            } catch (e) {
+                console.error('저장 데이터 파싱 오류:', e);
+                if (confirm('저장된 데이터가 손상되었습니다. 삭제하고 계속하시겠습니까?')) {
+                    localStorage.removeItem(STORAGE_KEY);
+                }
+                return [];
+            }
         }
-        
+
         function saveAllData(dataList) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataList));
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(dataList));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    alert('저장 공간이 부족합니다. 오래된 평가 데이터를 삭제해주세요.');
+                } else {
+                    alert('저장 중 오류가 발생했습니다: ' + e.message);
+                }
+            }
         }
         
         function generateSaveId() {
@@ -3351,7 +3389,9 @@
             document.getElementById('input-work-days').value = data.jobInfo.workDaysPerYear;
             document.getElementById('input-career-years').value = data.jobInfo.careerYears;
             document.getElementById('input-career-months').value = data.jobInfo.careerMonths;
-            
+            var memoEl = document.getElementById('input-memo');
+            if (memoEl) memoEl.value = data.jobInfo.memo || '';
+
             // AI 분석 결과 UI 복원
             var aiResultContainer = document.getElementById('ai-result-container');
             if (appState.aiAnalysisResult && appState.aiAnalysisResult.text) {
@@ -3401,7 +3441,7 @@
             if (!confirm('현재 입력 중인 데이터를 초기화하시겠습니까?')) return;
             
             appState.personalInfo = { name: '', gender: 'male', age: 45, height: 172, weight: 68 };
-            appState.jobInfo = { jobName: '', workDaysPerYear: 250, careerYears: 0, careerMonths: 0 };
+            appState.jobInfo = { jobName: '', workDaysPerYear: 250, careerYears: 0, careerMonths: 0, memo: '' };
             appState.tasks = [];
             appState.currentTaskIndex = -1;
             appState.aiAnalysisResult = null;
@@ -3415,7 +3455,9 @@
             document.getElementById('input-work-days').value = 250;
             document.getElementById('input-career-years').value = 0;
             document.getElementById('input-career-months').value = 0;
-            
+            var memoReset = document.getElementById('input-memo');
+            if (memoReset) memoReset.value = '';
+
             // AI 분석 결과 UI 초기화
             document.getElementById('ai-result-container').innerHTML = '';
             
@@ -3703,7 +3745,8 @@
             
             try {
                 var prompt = generateAIPrompt();
-                
+                var selectedModel = document.getElementById('ai-model-select')?.value || 'claude-haiku-4-5-20251001';
+
                 // 서버 API Route를 통해 호출 (API 키는 서버에서 관리)
                 var response = await fetch('/api/analyze', {
                     method: 'POST',
@@ -3711,7 +3754,8 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        prompt: prompt
+                        prompt: prompt,
+                        model: selectedModel
                     })
                 });
                 
@@ -3727,7 +3771,7 @@
                 appState.aiAnalysisResult = {
                     text: aiResponse,
                     timestamp: new Date().toISOString(),
-                    model: 'claude-sonnet-4-20250514'
+                    model: selectedModel
                 };
                 
                 // 결과 표시
@@ -3767,6 +3811,62 @@
                 .replace(/\n/g, '<br>');
         }
 
+        // ========== 자동저장 (Draft) ==========
+        var DRAFT_KEY = 'mddm_draft';
+
+        function saveDraft() {
+            try {
+                sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+                    personalInfo: appState.personalInfo,
+                    jobInfo: appState.jobInfo,
+                    tasks: appState.tasks,
+                    savedAt: new Date().toISOString()
+                }));
+            } catch (e) {
+                // sessionStorage 실패 시 무시
+            }
+        }
+
+        function restoreDraft() {
+            try {
+                var raw = sessionStorage.getItem(DRAFT_KEY);
+                if (!raw) return;
+                var draft = JSON.parse(raw);
+                // 기본값과 다른 데이터가 있을 때만 복구 제안
+                var hasData = draft.tasks && draft.tasks.length > 0 &&
+                              (draft.personalInfo.name !== '홍길동' || draft.jobInfo.jobName !== '제조업 생산직');
+                if (!hasData) return;
+
+                var savedAt = new Date(draft.savedAt).toLocaleString('ko-KR');
+                if (confirm('미저장 임시 데이터가 있습니다 (' + savedAt + ').\n복구하시겠습니까?')) {
+                    appState.personalInfo = draft.personalInfo;
+                    appState.jobInfo = draft.jobInfo;
+                    appState.tasks = draft.tasks;
+                    appState.currentTaskIndex = draft.tasks.length > 0 ? 0 : -1;
+
+                    var el = function(id) { return document.getElementById(id); };
+                    el('input-name').value = draft.personalInfo.name || '';
+                    el('input-gender').value = draft.personalInfo.gender || 'male';
+                    el('input-age').value = draft.personalInfo.age || 45;
+                    el('input-height').value = draft.personalInfo.height || 172;
+                    el('input-weight').value = draft.personalInfo.weight || 68;
+                    el('input-job-name').value = draft.jobInfo.jobName || '';
+                    el('input-work-days').value = draft.jobInfo.workDaysPerYear || 250;
+                    el('input-career-years').value = draft.jobInfo.careerYears || 0;
+                    el('input-career-months').value = draft.jobInfo.careerMonths || 0;
+                    if (el('input-memo')) el('input-memo').value = draft.jobInfo.memo || '';
+
+                    renderTaskList();
+                    if (appState.tasks.length > 0) loadTaskToForm(0);
+                    updateFooterStats();
+                    calculateAndDisplayBMI();
+                    calculateCareerSummary();
+                }
+            } catch (e) {
+                sessionStorage.removeItem(DRAFT_KEY);
+            }
+        }
+
         // ========== 초기화 ==========
         function init() {
             addTask(); // 초기 작업 1개 생성
@@ -3777,6 +3877,7 @@
             calculateAndDisplayBMI();
             calculateCareerSummary();
             updateAIStatus(); // AI 상태 표시
+            restoreDraft();   // 임시저장 복구 확인
         }
 
         document.addEventListener('DOMContentLoaded', init);

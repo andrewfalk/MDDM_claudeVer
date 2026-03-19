@@ -52,14 +52,28 @@ export default async function handler(req, res) {
             headers: {
                 'Content-Type': 'application/json',
                 'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01'
+                'anthropic-version': '2023-06-01',
+                'anthropic-beta': 'prompt-caching-2024-07-31'
             },
             body: JSON.stringify({
-                model: model || 'claude-3-5-haiku-20241022',
+                model: model || 'claude-haiku-4-5-20251001',
                 max_tokens: 2000,
+                system: [
+                    {
+                        type: 'text',
+                        text: `당신은 MDDM(Mainz-Dortmund Dose Model) 전문가이며 직업성 요추 질환 평가에 특화된 산업의학 전문의입니다.
+다음 지침에 따라 분석하세요:
+1. MDDM 공식(F = b + m·L)과 G1~G11 자세 분류 기준을 정확히 적용
+2. 한국 산재보상보험법 기준(법원 기준: 남 12.5 MN·h, 여 8.5 MN·h) 참조
+3. DWS2 기준(남 7.0 MN·h, 여 3.0 MN·h)을 업무관련성 판단의 주요 기준으로 사용
+4. 분석 결과는 한국어로 작성하고, 전문 용어는 명확히 설명
+5. 구체적이고 실행 가능한 개선 권고를 우선순위와 함께 제시`,
+                        cache_control: { type: 'ephemeral' }
+                    }
+                ],
                 messages: [
-                    { 
-                        role: 'user', 
+                    {
+                        role: 'user',
                         content: prompt
                     }
                 ]
